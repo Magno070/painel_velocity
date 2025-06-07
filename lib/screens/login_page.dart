@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:velocity_admin_painel/screens/register_page.dart';
+import 'package:velocity_admin_painel/screens/slides_page.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -154,7 +155,12 @@ class LoginPage extends StatelessWidget {
                     Color.fromARGB(255, 11, 31, 103),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => SlidesPage()),
+                  );
+                },
                 child: SizedBox(
                   width: 200,
                   height: 50,

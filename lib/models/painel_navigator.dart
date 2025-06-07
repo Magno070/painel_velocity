@@ -6,12 +6,14 @@ class PainelNavigator extends StatelessWidget {
   final String textContent;
   final IconData iconData;
   final Color color;
+  final Widget route;
 
   const PainelNavigator({
     super.key,
     required this.iconData,
     required this.textContent,
     required this.color,
+    required this.route,
   });
 
   @override
@@ -21,12 +23,17 @@ class PainelNavigator extends StatelessWidget {
       textContent,
       style: GoogleFonts.poppins(
         color: Colors.white,
-        fontSize: 26,
+        fontSize: 22,
         fontWeight: FontWeight.bold,
       ),
     );
     return ElevatedButton(
-      onPressed: () {},
+      onPressed: () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => route),
+        );
+      },
       style: ButtonStyle(
         backgroundColor: WidgetStatePropertyAll(color),
         shape: WidgetStatePropertyAll(
@@ -34,7 +41,7 @@ class PainelNavigator extends StatelessWidget {
         ),
       ),
       child: Container(
-        padding: EdgeInsets.fromLTRB(36, 10, 0, 16),
+        padding: EdgeInsets.fromLTRB(16, 10, 0, 16),
         child: Row(children: [icon, SizedBox(width: 10), text]),
       ),
     );
@@ -63,9 +70,81 @@ class ExitPainelNavigator extends StatelessWidget {
     );
     return ElevatedButton(
       onPressed: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
+        showDialog(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            return AlertDialog(
+              backgroundColor: Colors.grey[850],
+              title: Container(
+                height: 200,
+                width: 400,
+                alignment: Alignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(
+                      width: 390,
+                      child: Text(
+                        'Retornar a página inicial?',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 30,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 390,
+                      child: Text(
+                        'Você será redirecionado a pagina de login.',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: 22,
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(width: 2),
+                        TextButton(
+                          child: Text(
+                            'Cancelar',
+                            style: GoogleFonts.poppins(
+                              color: Colors.blue,
+                              fontSize: 30,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop();
+                          },
+                        ),
+                        SizedBox(width: 2),
+                        TextButton(
+                          child: Text(
+                            'Confirmar',
+                            style: GoogleFonts.poppins(
+                              color: Colors.red,
+                              fontSize: 30,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LoginPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(width: 2),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
       style: ButtonStyle(
@@ -75,7 +154,7 @@ class ExitPainelNavigator extends StatelessWidget {
         ),
       ),
       child: Container(
-        padding: EdgeInsets.fromLTRB(36, 10, 0, 16),
+        padding: EdgeInsets.fromLTRB(16, 10, 0, 16),
         child: Row(children: [icon, SizedBox(width: 10), text]),
       ),
     );
