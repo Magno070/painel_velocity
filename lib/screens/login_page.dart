@@ -1,10 +1,68 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:velocity_admin_painel/screens/register_page.dart';
-import 'package:velocity_admin_painel/screens/slides_page.dart';
+import 'package:velocity_admin_painel/data/widgets/login_widget.dart';
+import 'package:velocity_admin_painel/data/widgets/recuperar_senha.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  int _currentPage = 0;
+  late TextEditingController _usernameController;
+  late TextEditingController _passwordController;
+  late TextEditingController _recEmailController;
+  late TextEditingController _recCodeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _usernameController = TextEditingController();
+    _passwordController = TextEditingController();
+    _recEmailController = TextEditingController();
+    _recCodeController = TextEditingController();
+  }
+
+  void _setPage(int index) {
+    setState(() {
+      _currentPage = index;
+    });
+  }
+
+  Widget _buildInnerContent() {
+    switch (_currentPage) {
+      //* ////////////////////////////////////////////////// child 1 /////////////////////////////////////////////
+
+      case 0:
+        return LoginWidget(
+          usernameController: _usernameController,
+          passwordController: _passwordController,
+          setFunction: () => _setPage(1),
+        );
+
+      //* ////////////////////////////////////////////////// child 2 /////////////////////////////////////////////
+
+      case 1:
+        return RecEmail(
+          recEmailController: _recEmailController,
+          enviarFunction: () => _setPage(2),
+          sairFunction: () => _setPage(0),
+        );
+
+      //* ////////////////////////////////////////////////// child 3 /////////////////////////////////////////////
+
+      case 2:
+        return RecCodigo(
+          recCodeController: _recCodeController,
+          confirmarFunction: () => _setPage(0),
+          cancelarFunction: () => _setPage(1),
+        );
+      default:
+        return SizedBox.shrink();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,160 +82,7 @@ class LoginPage extends StatelessWidget {
           height: 600,
           width: 600,
           padding: EdgeInsets.fromLTRB(30, 40, 30, 40),
-          child: Column(
-            children: [
-              Image.asset('assets/img/logo.png', width: 360, fit: BoxFit.cover),
-              SizedBox(height: 40),
-              Text(
-                'Bem-vindo ao painel, faça seu Login!',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 20),
-              SizedBox(
-                width: 390,
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    label: Row(
-                      children: [
-                        Icon(Icons.person, color: Colors.grey[400], size: 30),
-                        SizedBox(width: 8),
-
-                        Text(
-                          'Usuário',
-                          style: GoogleFonts.poppins(
-                            color: Colors.grey[400],
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(width: 3.0, color: Colors.white),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(width: 1.0, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 50),
-              SizedBox(
-                width: 390,
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    label: Row(
-                      children: [
-                        Icon(Icons.password, color: Colors.grey[400], size: 30),
-                        SizedBox(width: 8),
-                        Text(
-                          'Senha',
-                          style: GoogleFonts.poppins(
-                            color: Colors.grey[400],
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(width: 3.0, color: Colors.white),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(width: 1.0, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              SizedBox(
-                width: 390,
-                child: Row(
-                  children: [
-                    Text(
-                      'Você é novo(a)?',
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey[400],
-                        fontSize: 20,
-                      ),
-                    ),
-                    TextButton(
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStateColor.resolveWith((
-                          Set<WidgetState> states,
-                        ) {
-                          if (states.contains(WidgetState.hovered)) {
-                            return Colors.white;
-                          }
-                          return Colors.transparent;
-                        }),
-                        foregroundColor: WidgetStateColor.resolveWith((
-                          Set<WidgetState> states,
-                        ) {
-                          if (states.contains(WidgetState.hovered)) {
-                            return Colors.black;
-                          }
-                          return Colors.yellow;
-                        }),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RegisterPage(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'Registre-se agora!',
-                        style: GoogleFonts.poppins(fontSize: 20),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                style: ButtonStyle(
-                  shape: WidgetStatePropertyAll(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  backgroundColor: WidgetStatePropertyAll(
-                    Color.fromARGB(255, 11, 31, 103),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => SlidesPage()),
-                  );
-                },
-                child: SizedBox(
-                  width: 200,
-                  height: 50,
-                  child: Center(
-                    child: Text(
-                      'Login',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          child: _buildInnerContent(),
         ),
       ),
     );

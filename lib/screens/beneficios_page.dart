@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:velocity_admin_painel/models/screen_menu.dart';
 
 class BeneficiosPage extends StatelessWidget {
@@ -9,11 +8,9 @@ class BeneficiosPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: ScreenMenu(
-        pageTitle: 'GERENCIAMENTO DE BENEFÍCIOS',
-        newChild: Text(
-          'BENEFÍCIOS',
-          style: GoogleFonts.poppins(fontSize: 40, color: Colors.white),
-        ),
+        selectedItemId: 'BENEFICIOS',
+        pageTitleText: 'GERENCIAMENTO DE BENEFÍCIOS',
+        newChild: Container(color: Colors.red),
       ),
     );
   }

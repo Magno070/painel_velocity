@@ -10,8 +10,15 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: Colors.grey[850],
+        cardColor: Colors.grey[800],
+        textTheme: TextTheme(
+          bodyMedium: TextStyle(color: Color.fromARGB(255, 217, 205, 205)),
+        ),
+      ),
       home: LoginPage(),
     );
   }
