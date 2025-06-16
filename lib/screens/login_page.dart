@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:velocity_admin_painel/data/widgets/login_widget.dart';
-import 'package:velocity_admin_painel/data/widgets/recuperar_senha.dart';
+import 'package:velocity_admin_painel/public/widgets/login_widget.dart';
+import 'package:velocity_admin_painel/public/widgets/recuperar_senha.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

@@ -4,7 +4,6 @@ import 'package:velocity_admin_painel/models/painel_navigator.dart';
 import 'package:velocity_admin_painel/screens/beneficios_page.dart';
 import 'package:velocity_admin_painel/screens/combos_page.dart';
 import 'package:velocity_admin_painel/screens/curriculos_page.dart';
-import 'package:velocity_admin_painel/screens/descricao_page.dart';
 import 'package:velocity_admin_painel/screens/slides_page.dart';
 
 class MenuItem {
@@ -40,12 +39,7 @@ class ScreenMenu extends StatelessWidget {
       icon: Icons.library_books_outlined,
       page: const SlidesPage(),
     ),
-    MenuItem(
-      id: 'DESCRICAO',
-      title: 'Descrição',
-      icon: Icons.description,
-      page: const DescricaoPage(),
-    ),
+
     MenuItem(
       id: 'BENEFICIOS',
       title: 'Benefícios',
@@ -116,17 +110,12 @@ class ScreenMenu extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          pageTitleText,
-                          style: GoogleFonts.poppins(
-                            fontSize: 30,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      pageTitleText,
+                      style: GoogleFonts.poppins(
+                        fontSize: 30,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   Expanded(

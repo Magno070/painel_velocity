@@ -117,7 +117,7 @@ class ExitPainelNavigator extends StatelessWidget {
                                   ),
                                 ),
                                 backgroundColor: WidgetStatePropertyAll(
-                                  Color.fromARGB(255, 11, 31, 103),
+                                  Colors.green,
                                 ),
                               ),
                               onPressed: () {
@@ -148,7 +148,7 @@ class ExitPainelNavigator extends StatelessWidget {
                                   ),
                                 ),
                                 backgroundColor: WidgetStatePropertyAll(
-                                  Color.fromARGB(255, 103, 11, 11),
+                                  Colors.red,
                                 ),
                               ),
                               onPressed: () {
