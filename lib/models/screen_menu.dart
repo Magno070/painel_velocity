@@ -71,7 +71,7 @@ class ScreenMenu extends StatelessWidget {
         children: [
           Container(
             color: const Color(0xFF181818),
-            width: 280,
+            width: 250,
             height: double.infinity,
             child: Column(
               children: [
@@ -80,11 +80,9 @@ class ScreenMenu extends StatelessWidget {
                   width: 240,
                   child: Image.asset('assets/img/logo.png'),
                 ),
-
                 ListView.builder(
                   shrinkWrap:
                       true, // Essencial para ListView dentro de uma Column que não tem altura fixa ou não está em um Expanded
-                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: _menuItems.length,
                   itemBuilder: (context, index) {
                     final item = _menuItems[index];
@@ -108,20 +106,20 @@ class ScreenMenu extends StatelessWidget {
               alignment: Alignment.center,
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Text(
-                      pageTitleText,
-                      style: GoogleFonts.poppins(
-                        fontSize: 30,
-                        color: Colors.white,
-                      ),
+                  Text(
+                    pageTitleText,
+                    style: GoogleFonts.poppins(
+                      fontSize: 30,
+                      color: Colors.white,
                     ),
                   ),
                   Expanded(
                     child: Container(
                       alignment: Alignment.center,
-                      child: newChild,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: newChild,
+                      ),
                     ),
                   ),
                 ],

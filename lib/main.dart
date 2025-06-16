@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:velocity_admin_painel/screens/combos_page.dart';
+import 'package:velocity_admin_painel/screens/curriculos_page.dart';
 
 void main() {
   runApp(const MainApp());
@@ -19,7 +19,7 @@ class MainApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Color.fromARGB(255, 217, 205, 205)),
         ),
       ),
-      home: CombosPage(),
+      home: CurriculosPage(),
     );
   }
 }

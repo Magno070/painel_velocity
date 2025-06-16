@@ -23,7 +23,7 @@ class PainelNavigator extends StatelessWidget {
       textContent,
       style: GoogleFonts.poppins(
         color: Colors.white,
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: FontWeight.bold,
       ),
     );
@@ -57,13 +57,13 @@ class ExitPainelNavigator extends StatelessWidget {
   Widget build(BuildContext context) {
     final Icon icon = Icon(
       Icons.exit_to_app_outlined,
-      color: Colors.red,
+      color: Colors.redAccent,
       size: 40,
     );
     final Text text = Text(
       'Sair',
       style: GoogleFonts.poppins(
-        color: Colors.red,
+        color: Colors.redAccent,
         fontSize: 26,
         fontWeight: FontWeight.bold,
       ),
@@ -148,7 +148,7 @@ class ExitPainelNavigator extends StatelessWidget {
                                   ),
                                 ),
                                 backgroundColor: WidgetStatePropertyAll(
-                                  Colors.red,
+                                  Colors.redAccent,
                                 ),
                               ),
                               onPressed: () {
