@@ -72,7 +72,7 @@ class _CurriculosPageState extends State<CurriculosPage> {
       bodyContent = const Center(child: CircularProgressIndicator());
     } else if (_errorMessage != null) {
       bodyContent = Center(
-        child: PoppinsNormal(
+        child: Poppins(
           'Erro ao carregar: $_errorMessage',
           color: Colors.red,
           size: 16,
@@ -80,7 +80,7 @@ class _CurriculosPageState extends State<CurriculosPage> {
       );
     } else if (_curriculos.isEmpty) {
       bodyContent = Center(
-        child: PoppinsNormal('Nenhum currículo encontrado.', size: 16),
+        child: Poppins('Nenhum currículo encontrado.', size: 16),
       );
     } else {
       bodyContent = _buildCurriculosList();
@@ -119,16 +119,17 @@ class _CurriculosPageState extends State<CurriculosPage> {
                             Icons.person_outline,
                             color: Colors.white,
                           ),
-                          title: PoppinsBold(
+                          title: Poppins(
                             curriculo.nome,
+                            bold: true,
                           ), // Usa curriculo.nome
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              PoppinsNormal(
+                              Poppins(
                                 curriculo.funcaoEsc,
                               ), // Usa curriculo.funcaoEsc
-                              PoppinsNormal(
+                              Poppins(
                                 'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(curriculo.dataEnvio)}', // Formata dataEnvio
                                 size: 14,
                               ),
@@ -157,20 +158,21 @@ class _CurriculosPageState extends State<CurriculosPage> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                PoppinsBold('Nome: '),
-                                PoppinsNormal(curriculo.nome),
                                 const SizedBox(height: 8),
-                                PoppinsBold('Cargo: '),
-                                PoppinsNormal(curriculo.funcaoEsc),
+                                Poppins(bold: true, 'Nome: '),
+                                Poppins(curriculo.nome),
                                 const SizedBox(height: 8),
-                                PoppinsBold('Telefone: '),
-                                PoppinsNormal(curriculo.telefone),
+                                Poppins(bold: true, 'Cargo: '),
+                                Poppins(curriculo.funcaoEsc),
                                 const SizedBox(height: 8),
-                                PoppinsBold('Email: '),
-                                PoppinsNormal(curriculo.email),
+                                Poppins(bold: true, 'Telefone: '),
+                                Poppins(curriculo.telefone),
+                                const SizedBox(height: 8),
+                                Poppins(bold: true, 'Email: '),
+                                Poppins(curriculo.email),
                                 const SizedBox(height: 8),
                                 Divider(color: Colors.white),
-                                PoppinsNormal(
+                                Poppins(
                                   'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(curriculo.dataEnvio)}',
                                   size: 14,
                                 ),
@@ -199,7 +201,7 @@ class _CurriculosPageState extends State<CurriculosPage> {
                                 padding: const EdgeInsets.all(8),
                                 minimumSize: const Size(100, 50),
                               ),
-                              child: PoppinsBold('EXCLUIR', size: 18),
+                              child: Poppins(bold: true, 'EXCLUIR', size: 18),
                             ),
                             SizedBox(height: 16),
                             TextButton(
@@ -207,7 +209,8 @@ class _CurriculosPageState extends State<CurriculosPage> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Center(
-                                      child: PoppinsBold(
+                                      child: Poppins(
+                                        bold: true,
                                         'Anexo: ${curriculo.anexo}',
                                         color: Colors.black,
                                       ),
@@ -218,7 +221,8 @@ class _CurriculosPageState extends State<CurriculosPage> {
                               style: TextButton.styleFrom(
                                 foregroundColor: Colors.green,
                               ),
-                              child: PoppinsBold(
+                              child: Poppins(
+                                bold: true,
                                 'ANEXO',
                                 color: Colors.green,
                                 size: 18,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:velocity_admin_painel/models/painel_navigator.dart';
+import 'package:velocity_admin_painel/public/fonts/poppins.dart';
 import 'package:velocity_admin_painel/screens/beneficios_page.dart';
 import 'package:velocity_admin_painel/screens/combos_page.dart';
 import 'package:velocity_admin_painel/screens/curriculos_page.dart';
@@ -106,13 +107,8 @@ class ScreenMenu extends StatelessWidget {
               alignment: Alignment.center,
               child: Column(
                 children: [
-                  Text(
-                    pageTitleText,
-                    style: GoogleFonts.poppins(
-                      fontSize: 30,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Poppins(pageTitleText, size: 30),
+
                   Expanded(
                     child: Container(
                       alignment: Alignment.center,

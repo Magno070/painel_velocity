@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:velocity_admin_painel/models/screen_menu.dart';
+import 'package:velocity_admin_painel/public/fonts/poppins.dart';
 
 class SlidesPage extends StatefulWidget {
   const SlidesPage({super.key});
@@ -84,12 +85,10 @@ class _SlidesPageState extends State<SlidesPage> {
                                     _imageUrls;
                                   });
                                 },
-                                child: Text(
+                                child: Poppins(
                                   'Adicionar slide',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  size: 22,
+                                  bold: true,
                                 ),
                               ),
                             ),
@@ -141,13 +140,7 @@ class _SlidesPageState extends State<SlidesPage> {
                                     _imageUrls.removeAt(index - 1);
                                   });
                                 },
-                                child: Text(
-                                  'Excluir',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                child: Poppins('Excluir', size: 22, bold: true),
                               ),
                             ),
                           ),
