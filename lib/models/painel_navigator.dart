@@ -18,7 +18,7 @@ class PainelNavigator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Icon icon = Icon(iconData, color: Colors.white, size: 40);
+    final Icon icon = Icon(iconData, color: Colors.white, size: 34);
     final Text text = Text(
       textContent,
       style: GoogleFonts.poppins(
@@ -41,8 +41,11 @@ class PainelNavigator extends StatelessWidget {
         ),
       ),
       child: Container(
-        padding: EdgeInsets.fromLTRB(16, 10, 0, 16),
-        child: Row(children: [icon, SizedBox(width: 10), text]),
+        padding: EdgeInsets.fromLTRB(12, 10, 0, 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [icon, SizedBox(width: 10), text],
+        ),
       ),
     );
   }
@@ -58,13 +61,13 @@ class ExitPainelNavigator extends StatelessWidget {
     final Icon icon = Icon(
       Icons.exit_to_app_outlined,
       color: Colors.redAccent,
-      size: 40,
+      size: 34,
     );
     final Text text = Text(
       'Sair',
       style: GoogleFonts.poppins(
         color: Colors.redAccent,
-        fontSize: 26,
+        fontSize: 20,
         fontWeight: FontWeight.bold,
       ),
     );

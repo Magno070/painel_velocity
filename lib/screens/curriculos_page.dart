@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import 'package:velocity_admin_painel/services/models/candidato.dart';
+import 'package:velocity_admin_painel/services/get_curriculos_service.dart';
+
 import 'package:velocity_admin_painel/models/screen_menu.dart';
 import 'package:velocity_admin_painel/public/fonts/poppins.dart';
 
@@ -10,17 +15,47 @@ class CurriculosPage extends StatefulWidget {
 }
 
 class _CurriculosPageState extends State<CurriculosPage> {
-  late List<Map<String, String>> _curriculos;
+  List<Usuario> _curriculos = []; // Alterado para List<Usuario>
   int? _expandedIndex; // Índice do ExpansionTile expandido
+  bool _isLoading = true;
+  String? _errorMessage;
+  final ApiService _apiService = ApiService(); // Instância do serviço
 
   @override
   void initState() {
     super.initState();
-    _curriculos = List<Map<String, String>>.from(_initialCurriculosData);
+    _fetchCurriculos();
+  }
+
+  Future<void> _fetchCurriculos() async {
+    try {
+      final candidatos = await _apiService.getCandidates();
+      if (mounted) {
+        // Verifica se o widget ainda está na árvore
+        setState(() {
+          _curriculos = candidatos;
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _deleteCurriculo(int index) {
     setState(() {
+      // TODO: Implementar a chamada à API para deletar o currículo no backend
+      // Ex: _apiService.deleteCandidate(_curriculos[index].id).then((success) {
+      //   if (success && mounted) {
+      //     setState(() { _curriculos.removeAt(index); ... });
+      //   }
+      // });
       _curriculos.removeAt(index);
       if (_expandedIndex == index) {
         _expandedIndex =
@@ -31,262 +66,175 @@ class _CurriculosPageState extends State<CurriculosPage> {
 
   @override
   Widget build(BuildContext context) {
+    Widget bodyContent;
+
+    if (_isLoading) {
+      bodyContent = const Center(child: CircularProgressIndicator());
+    } else if (_errorMessage != null) {
+      bodyContent = Center(
+        child: PoppinsNormal(
+          'Erro ao carregar: $_errorMessage',
+          color: Colors.red,
+          size: 16,
+        ),
+      );
+    } else if (_curriculos.isEmpty) {
+      bodyContent = Center(
+        child: PoppinsNormal('Nenhum currículo encontrado.', size: 16),
+      );
+    } else {
+      bodyContent = _buildCurriculosList();
+    }
+
     return ScreenMenu(
       selectedItemId: 'CURRICULOS',
       pageTitleText: 'GERENCIAMENTO DE CURRÍCULOS',
-      newChild: ListView.builder(
-        itemCount: _curriculos.length,
-        itemBuilder: (BuildContext context, int index) {
-          final curriculo = _curriculos[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Card(
-                    color: Colors.grey[900],
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ExpansionTile(
-                            key: ValueKey(
-                              'expansion_$index-${_expandedIndex == index}',
-                            ),
-                            iconColor: Colors.white,
-                            collapsedIconColor: Colors.white,
-                            leading: const Icon(
-                              Icons.person_outline,
-                              color: Colors.white,
-                            ),
-                            title: PoppinsBold('${curriculo['nome']}'),
-                            subtitle: Column(
+      newChild: bodyContent,
+    );
+  }
+
+  Widget _buildCurriculosList() {
+    return ListView.builder(
+      itemCount: _curriculos.length,
+      itemBuilder: (BuildContext context, int index) {
+        final curriculo = _curriculos[index];
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Card(
+                  color: Colors.grey[900],
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ExpansionTile(
+                          key: ValueKey(
+                            'expansion_$index-${_expandedIndex == index}',
+                          ),
+                          iconColor: Colors.white,
+                          collapsedIconColor: Colors.white,
+                          leading: const Icon(
+                            Icons.person_outline,
+                            color: Colors.white,
+                          ),
+                          title: PoppinsBold(
+                            curriculo.nome,
+                          ), // Usa curriculo.nome
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              PoppinsNormal(
+                                curriculo.funcaoEsc,
+                              ), // Usa curriculo.funcaoEsc
+                              PoppinsNormal(
+                                'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(curriculo.dataEnvio)}', // Formata dataEnvio
+                                size: 14,
+                              ),
+                            ],
+                          ),
+                          expandedAlignment: Alignment.topLeft,
+                          childrenPadding: const EdgeInsets.fromLTRB(
+                            16.0,
+                            0,
+                            16.0,
+                            16.0,
+                          ),
+                          onExpansionChanged: (expanded) {
+                            setState(() {
+                              if (expanded) {
+                                _expandedIndex = index;
+                              } else if (_expandedIndex == index) {
+                                _expandedIndex = null;
+                              }
+                            });
+                          },
+                          initiallyExpanded:
+                              _expandedIndex ==
+                              index, // Expande apenas o índice desejado
+                          children: [
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                PoppinsNormal('${curriculo['vaga']}'),
+                                PoppinsBold('Nome: '),
+                                PoppinsNormal(curriculo.nome),
+                                const SizedBox(height: 8),
+                                PoppinsBold('Cargo: '),
+                                PoppinsNormal(curriculo.funcaoEsc),
+                                const SizedBox(height: 8),
+                                PoppinsBold('Telefone: '),
+                                PoppinsNormal(curriculo.telefone),
+                                const SizedBox(height: 8),
+                                PoppinsBold('Email: '),
+                                PoppinsNormal(curriculo.email),
+                                const SizedBox(height: 8),
+                                Divider(color: Colors.white),
                                 PoppinsNormal(
-                                  'Recebido em: ${curriculo['recebidoEm']}',
+                                  'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(curriculo.dataEnvio)}',
                                   size: 14,
                                 ),
                               ],
                             ),
-                            expandedAlignment: Alignment.topLeft,
-                            childrenPadding: const EdgeInsets.fromLTRB(
-                              16.0,
-                              0,
-                              16.0,
-                              16.0,
-                            ),
-                            onExpansionChanged: (expanded) {
-                              setState(() {
-                                if (expanded) {
-                                  _expandedIndex = index;
-                                } else if (_expandedIndex == index) {
-                                  _expandedIndex = null;
-                                }
-                              });
-                            },
-                            initiallyExpanded:
-                                _expandedIndex ==
-                                index, // Expande apenas o índice desejado
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  PoppinsBold('Nome: '),
-                                  PoppinsNormal('${curriculo['nome']}'),
-                                  const SizedBox(height: 8),
-                                  PoppinsBold('Cargo: '),
-                                  PoppinsNormal('${curriculo['vaga']}'),
-                                  const SizedBox(height: 8),
-                                  PoppinsBold('Telefone: '),
-                                  PoppinsNormal('${curriculo['tel']}'),
-                                  const SizedBox(height: 8),
-                                  PoppinsBold('Email: '),
-                                  PoppinsNormal('${curriculo['email']}'),
-                                  const SizedBox(height: 8),
-                                  PoppinsBold('Descrição:'),
-                                  PoppinsNormal(
-                                    '${curriculo['descricao']}',
-                                    size: 14,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Divider(color: Colors.white),
-                                  PoppinsNormal(
-                                    'Recebido em: ${curriculo['recebidoEm']}',
-                                    size: 14,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 8,
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ElevatedButton(
-                                onPressed: () {
-                                  _deleteCurriculo(index);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.redAccent,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  padding: const EdgeInsets.all(8),
-                                  minimumSize: const Size(100, 50),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                _deleteCurriculo(index);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: PoppinsBold('EXCLUIR', size: 18),
+                                padding: const EdgeInsets.all(8),
+                                minimumSize: const Size(100, 50),
                               ),
-                              SizedBox(height: 16),
-                              TextButton(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Center(
-                                        child: PoppinsBold(
-                                          'Anexo não definido',
-                                          color: Colors.black,
-                                        ),
+                              child: PoppinsBold('EXCLUIR', size: 18),
+                            ),
+                            SizedBox(height: 16),
+                            TextButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Center(
+                                      child: PoppinsBold(
+                                        'Anexo: ${curriculo.anexo}',
+                                        color: Colors.black,
                                       ),
                                     ),
-                                  );
-                                },
-                                child: PoppinsBold(
-                                  'ANEXO',
-                                  color: Colors.green,
-                                  size: 18,
-                                ),
+                                  ),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.green,
                               ),
-                            ],
-                          ),
+                              child: PoppinsBold(
+                                'ANEXO',
+                                color: Colors.green,
+                                size: 18,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
-
-List<Map<String, String>> _initialCurriculosData = [
-  {
-    'nome': 'Magno Antonini da Luz Moraes',
-    'vaga': 'Programador',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '20/07/2023 10:15',
-  },
-  {
-    'nome': 'Magnoliaas Antonella Pereira',
-    'vaga': 'Atendente',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '21/07/2023 11:30',
-  },
-  {
-    'nome': 'Magnolioso Júnior da Silva',
-    'vaga': 'Financeiro',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '22/07/2023 09:05',
-  },
-  {
-    'nome': 'Magno Antonini da Luz Moraes',
-    'vaga': 'Programador',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '20/07/2023 10:15',
-  },
-  {
-    'nome': 'Magnoliaas Antonella Pereira',
-    'vaga': 'Atendente',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '21/07/2023 11:30',
-  },
-  {
-    'nome': 'Magnolioso Júnior da Silva',
-    'vaga': 'Financeiro',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '22/07/2023 09:05',
-  },
-  {
-    'nome': 'Magno Antonini da Luz Moraes',
-    'vaga': 'Programador',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '20/07/2023 10:15',
-  },
-  {
-    'nome': 'Magnoliaas Antonella Pereira',
-    'vaga': 'Atendente',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '21/07/2023 11:30',
-  },
-  {
-    'nome': 'Magnolioso Júnior da Silva',
-    'vaga': 'Financeiro',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '22/07/2023 09:05',
-  },
-  {
-    'nome': 'Magno Antonini da Luz Moraes',
-    'vaga': 'Programador',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '20/07/2023 10:15',
-  },
-  {
-    'nome': 'Magnoliaas Antonella Pereira',
-    'vaga': 'Atendente',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '21/07/2023 11:30',
-  },
-  {
-    'nome': 'Magnolioso Júnior da Silva',
-    'vaga': 'Financeiro',
-    'tel': '94991120558',
-    'email': 'magnomicrosoftj@gmail.com',
-    'descricao':
-        'hasask skosd masodm aksokdsaocm, kmoaskmdoksd okasokdsalkdm askdopksapdl \n sakodkspld lkclxpcsp asijdoks okasokdm akjspldpsld kalksldk ksjakjdksj lkaslkck kjaskjdsk lksalkdlks lkaskdlks',
-    'recebidoEm': '22/07/2023 09:05',
-  },
-];
