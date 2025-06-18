@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:velocity_admin_painel/public/fonts/poppins.dart';
 
 class MyTextFormField extends StatelessWidget {
   final String labelText;
@@ -31,13 +32,7 @@ class MyTextFormField extends StatelessWidget {
             children: [
               Icon(icon, color: Colors.grey[400], size: 30),
               SizedBox(width: 8),
-              Text(
-                labelText,
-                style: GoogleFonts.poppins(
-                  color: Colors.grey[400],
-                  fontSize: 20,
-                ),
-              ),
+              Poppins(labelText, color: Colors.grey[400]!, size: 20),
             ],
           ),
           focusedBorder: OutlineInputBorder(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:velocity_admin_painel/public/fonts/poppins.dart';
 import 'package:velocity_admin_painel/public/secret/admins_data.dart';
 import 'package:velocity_admin_painel/models/mytextformfield.dart';
 import 'package:velocity_admin_painel/screens/slides_page.dart';
@@ -21,17 +22,15 @@ class LoginWidget extends StatelessWidget {
     return Column(
       children: [
         Image.asset('assets/img/logo.png', width: 360, fit: BoxFit.cover),
-        SizedBox(height: 40),
-        Text(
+        SizedBox(height: 30),
+        Poppins(
           'Bem-vindo ao painel, faça seu Login!',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          color: Colors.white,
+          size: 20,
+          bold: true,
         ),
-        SizedBox(height: 20),
+
+        SizedBox(height: 30),
         MyTextFormField(
           labelText: 'Usuário',
           icon: Icons.person_outline,

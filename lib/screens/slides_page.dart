@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:velocity_admin_painel/models/screen_menu.dart';
+import 'package:velocity_admin_painel/public/fonts/poppins.dart';
 
 class SlidesPage extends StatefulWidget {
   const SlidesPage({super.key});
@@ -10,9 +10,8 @@ class SlidesPage extends StatefulWidget {
 }
 
 class _SlidesPageState extends State<SlidesPage> {
-  // Lista de URLs das imagens, agora como variável de estado
   final List<String> _imageUrls = [
-    'https://picsum.photos/seed/1/400/300', // Exemplo de URL de imagem
+    'https://picsum.photos/seed/1/400/300',
     'https://picsum.photos/seed/2/400/300',
     'https://picsum.photos/seed/3/400/300',
     'https://picsum.photos/seed/4/400/300',
@@ -84,12 +83,10 @@ class _SlidesPageState extends State<SlidesPage> {
                                     _imageUrls;
                                   });
                                 },
-                                child: Text(
+                                child: Poppins(
                                   'Adicionar slide',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  size: 22,
+                                  bold: true,
                                 ),
                               ),
                             ),
@@ -141,13 +138,7 @@ class _SlidesPageState extends State<SlidesPage> {
                                     _imageUrls.removeAt(index - 1);
                                   });
                                 },
-                                child: Text(
-                                  'Excluir',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                child: Poppins('Excluir', size: 22, bold: true),
                               ),
                             ),
                           ),
