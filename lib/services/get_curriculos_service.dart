@@ -13,11 +13,7 @@ class ApiService {
 
       if (response.statusCode == 200) {
         // Decodifica o corpo da resposta JSON.
-        // A API pode retornar uma lista diretamente: [{}, {}, ...]
         List<dynamic> body = jsonDecode(response.body);
-
-        // Se a lista estiver aninhada, por exemplo, em uma chave "data":
-        // List<dynamic> body = jsonDecode(response.body)['data'];
 
         List<Usuario> usuarios =
             body
@@ -25,6 +21,7 @@ class ApiService {
                   (dynamic item) =>
                       Usuario.fromJson(item as Map<String, dynamic>),
                 )
+                //TODO: Verificar o filtro de nulos após adicionar rota de delete
                 .whereType<Usuario>() // Filtra os nulos retornados por fromJson
                 .toList();
         return usuarios;
@@ -34,8 +31,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      // Para debug, você pode imprimir o erro aqui ou usar um logger
-      // print('Erro em getCandidates: $e');
       throw Exception('Erro ao buscar candidatos: $e');
     }
   }
