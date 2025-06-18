@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:velocity_admin_painel/models/painel_navigator.dart';
 import 'package:velocity_admin_painel/public/fonts/poppins.dart';
 import 'package:velocity_admin_painel/screens/beneficios_page.dart';
@@ -108,7 +107,6 @@ class ScreenMenu extends StatelessWidget {
               child: Column(
                 children: [
                   Poppins(pageTitleText, size: 30),
-
                   Expanded(
                     child: Container(
                       alignment: Alignment.center,
