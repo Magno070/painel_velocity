@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:velocity_admin_painel/services/models/candidato.dart';
-import 'package:velocity_admin_painel/services/get_curriculos_service.dart';
-
+import 'package:velocity_admin_painel/models/campo_anexo.dart';
 import 'package:velocity_admin_painel/models/screen_menu.dart';
 import 'package:velocity_admin_painel/public/fonts/poppins.dart';
+import 'package:velocity_admin_painel/services/models/candidato.dart';
+import 'package:velocity_admin_painel/services/api_curriculos_service.dart';
 
 class CurriculosPage extends StatefulWidget {
   const CurriculosPage({super.key});
@@ -15,230 +15,267 @@ class CurriculosPage extends StatefulWidget {
 }
 
 class _CurriculosPageState extends State<CurriculosPage> {
-  List<Usuario> _curriculos = []; // Alterado para List<Usuario>
-  int? _expandedIndex; // Índice do ExpansionTile expandido
-  bool _isLoading = true;
-  String? _errorMessage;
-  final ApiService _apiService = ApiService(); // Instância do serviço
+  final ApiService _apiService = ApiService();
+  final List<Usuario> _curriculos = [];
+  int? _indiceExpandido;
+  bool _carregando = true;
+  String? _mensagemErro;
 
   @override
   void initState() {
     super.initState();
-    _fetchCurriculos();
+    _carregarCurriculos();
   }
 
-  Future<void> _fetchCurriculos() async {
+  Future<void> _carregarCurriculos() async {
     try {
       final candidatos = await _apiService.getCandidates();
-      if (mounted) {
-        // Verifica se o widget ainda está na árvore
-        setState(() {
-          _curriculos = candidatos;
-          _isLoading = false;
-          _errorMessage = null;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _curriculos.addAll(candidatos);
+        _carregando = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = e.toString();
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _mensagemErro = e.toString();
+        _carregando = false;
+      });
     }
   }
 
-  void _deleteCurriculo(int index) {
-    setState(() {
-      // TODO: Implementar a chamada à API para deletar o currículo no backend
-      // Ex: _apiService.deleteCandidate(_curriculos[index].id).then((success) {
-      //   if (success && mounted) {
-      //     setState(() { _curriculos.removeAt(index); ... });
-      //   }
-      // });
-      _curriculos.removeAt(index);
-      if (_expandedIndex == index) {
-        _expandedIndex =
-            null; // Se o item deletado for o expandido, reseta o índice
-      }
-    });
+  Future<void> _deletarCurriculo(int index) async {
+    final candidato = _curriculos[index];
+    final confirmacao = await _mostrarDialogoConfirmacao(candidato.nome);
+    if (confirmacao != true) return;
+
+    try {
+      final mensagem = await _apiService.deleteCandidate(candidato.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.grey[900],
+          content: Center(child: Poppins('Sucesso: $mensagem')),
+        ),
+      );
+      setState(() {
+        _curriculos.removeAt(index);
+        if (_indiceExpandido == index) {
+          _indiceExpandido = null;
+        } else if (_indiceExpandido != null && _indiceExpandido! > index) {
+          _indiceExpandido = _indiceExpandido! - 1;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Poppins(
+            'Erro ao deletar: ${e.toString()}',
+            color: Colors.red,
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<bool?> _mostrarDialogoConfirmacao(String nome) {
+    return showDialog<bool>(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: Poppins('Confirmar exclusão', size: 20, bold: true),
+            content: Poppins(
+              'Tem certeza que deseja excluir o currículo de $nome?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Poppins('Cancelar', color: Colors.green),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Poppins('Excluir', color: Colors.red),
+              ),
+            ],
+          ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget bodyContent;
-
-    if (_isLoading) {
-      bodyContent = const Center(child: CircularProgressIndicator());
-    } else if (_errorMessage != null) {
-      bodyContent = Center(
-        child: Poppins(
-          'Erro ao carregar: $_errorMessage',
-          color: Colors.red,
-          size: 16,
-        ),
-      );
-    } else if (_curriculos.isEmpty) {
-      bodyContent = Center(
-        child: Poppins('Nenhum currículo encontrado.', size: 16),
-      );
-    } else {
-      bodyContent = _buildCurriculosList();
-    }
-
     return ScreenMenu(
       selectedItemId: 'CURRICULOS',
       pageTitleText: 'GERENCIAMENTO DE CURRÍCULOS',
-      newChild: bodyContent,
+      newChild: _construirConteudoPrincipal(),
     );
   }
 
-  Widget _buildCurriculosList() {
+  Widget _construirConteudoPrincipal() {
+    if (_carregando) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (_mensagemErro != null) {
+      return Center(
+        child: Poppins('Erro ao carregar: $_mensagemErro', color: Colors.red),
+      );
+    } else if (_curriculos.isEmpty) {
+      return Center(child: Poppins('Nenhum currículo encontrado.', size: 16));
+    }
     return ListView.builder(
       itemCount: _curriculos.length,
-      itemBuilder: (BuildContext context, int index) {
-        final curriculo = _curriculos[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Card(
-                  color: Colors.grey[900],
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ExpansionTile(
-                          key: ValueKey(
-                            'expansion_$index-${_expandedIndex == index}',
-                          ),
-                          iconColor: Colors.white,
-                          collapsedIconColor: Colors.white,
-                          leading: const Icon(
-                            Icons.person_outline,
-                            color: Colors.white,
-                          ),
-                          title: Poppins(
-                            curriculo.nome,
-                            bold: true,
-                          ), // Usa curriculo.nome
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Poppins(
-                                curriculo.funcaoEsc,
-                              ), // Usa curriculo.funcaoEsc
-                              Poppins(
-                                'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(curriculo.dataEnvio)}', // Formata dataEnvio
-                                size: 14,
-                              ),
-                            ],
-                          ),
-                          expandedAlignment: Alignment.topLeft,
-                          childrenPadding: const EdgeInsets.fromLTRB(
-                            16.0,
-                            0,
-                            16.0,
-                            16.0,
-                          ),
-                          onExpansionChanged: (expanded) {
-                            setState(() {
-                              if (expanded) {
-                                _expandedIndex = index;
-                              } else if (_expandedIndex == index) {
-                                _expandedIndex = null;
-                              }
-                            });
-                          },
-                          initiallyExpanded:
-                              _expandedIndex ==
-                              index, // Expande apenas o índice desejado
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 8),
-                                Poppins(bold: true, 'Nome: '),
-                                Poppins(curriculo.nome),
-                                const SizedBox(height: 8),
-                                Poppins(bold: true, 'Cargo: '),
-                                Poppins(curriculo.funcaoEsc),
-                                const SizedBox(height: 8),
-                                Poppins(bold: true, 'Telefone: '),
-                                Poppins(curriculo.telefone),
-                                const SizedBox(height: 8),
-                                Poppins(bold: true, 'Email: '),
-                                Poppins(curriculo.email),
-                                const SizedBox(height: 8),
-                                Divider(color: Colors.white),
-                                Poppins(
-                                  'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(curriculo.dataEnvio)}',
-                                  size: 14,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                _deleteCurriculo(index);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding: const EdgeInsets.all(8),
-                                minimumSize: const Size(100, 50),
-                              ),
-                              child: Poppins(bold: true, 'EXCLUIR', size: 18),
-                            ),
-                            SizedBox(height: 16),
-                            TextButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Center(
-                                      child: Poppins(
-                                        bold: true,
-                                        'Anexo: ${curriculo.anexo}',
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.green,
-                              ),
-                              child: Poppins(
-                                bold: true,
-                                'ANEXO',
-                                color: Colors.green,
-                                size: 18,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+      itemBuilder:
+          (_, index) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6.0),
+            child: _ItemCurriculo(
+              usuario: _curriculos[index],
+              expandido: _indiceExpandido == index,
+              aoExpandir: (expandir) {
+                setState(() => _indiceExpandido = expandir ? index : null);
+              },
+              aoDeletar: () => _deletarCurriculo(index),
+            ),
           ),
-        );
-      },
+    );
+  }
+}
+
+class _ItemCurriculo extends StatelessWidget {
+  final Usuario usuario;
+  final bool expandido;
+  final void Function(bool) aoExpandir;
+  final VoidCallback aoDeletar;
+
+  const _ItemCurriculo({
+    required this.usuario,
+    required this.expandido,
+    required this.aoExpandir,
+    required this.aoDeletar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: expandido ? Colors.white70 : Colors.transparent,
+        ),
+      ),
+      color: Colors.grey[900],
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ExpansionTile(
+              key: ValueKey('expansion_${usuario.id}'),
+              shape: Border.all(color: Colors.transparent),
+              controlAffinity: ListTileControlAffinity.leading,
+              initiallyExpanded: expandido,
+              onExpansionChanged: aoExpandir,
+              title: Row(
+                children: [
+                  const Icon(
+                    Icons.person_outline,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: Poppins(usuario.nome, bold: true)),
+                ],
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _linhaIconeTexto(Icons.work_outline, usuario.cargo),
+                  _linhaIconeTexto(
+                    Icons.calendar_month,
+                    'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(usuario.dataEnvio)}',
+                  ),
+                ],
+              ),
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    _linhaDetalhe('Nome:', usuario.nome),
+                    _linhaDetalhe('Cargo:', usuario.cargo),
+                    _linhaDetalhe('Telefone:', usuario.telefone),
+                    _linhaDetalhe('Email:', usuario.email),
+                    _linhaDetalhe(
+                      'Data de nascimento:',
+                      DateFormat('dd/MM/yyyy').format(usuario.dataNascimento),
+                    ),
+                    _linhaDetalhe('Descrição:', usuario.descricao),
+                    const Divider(color: Colors.white),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Poppins(
+                        'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(usuario.dataEnvio)}',
+                        size: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(children: [_botaoDeletar(), _anexoButton(context)]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _botaoDeletar() {
+    return ElevatedButton(
+      onPressed: aoDeletar,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.redAccent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.all(8),
+      ),
+      child: Poppins(bold: true, 'EXCLUIR'),
+    );
+  }
+
+  Widget _anexoButton(context) {
+    return TextButton(
+      onPressed: () => mostrarAnexoDialog(context),
+      style: TextButton.styleFrom(foregroundColor: Colors.green),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(Icons.attachment, color: Colors.green, size: 18),
+          SizedBox(width: 4),
+          Poppins(bold: true, 'ANEXO', color: Colors.green),
+        ],
+      ),
+    );
+  }
+
+  Widget _linhaIconeTexto(IconData icone, String texto) {
+    return Row(
+      children: [
+        Icon(icone, color: Colors.white70, size: 20),
+        const SizedBox(width: 8),
+        Expanded(child: Poppins(texto, color: Colors.white70)),
+      ],
+    );
+  }
+
+  Widget _linhaDetalhe(String label, String valor) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Poppins(label, bold: true),
+          Poppins(valor, color: Colors.white70),
+        ],
+      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:velocity_admin_painel/public/fonts/poppins.dart';
 import 'package:velocity_admin_painel/screens/login_page.dart';
 
 class PainelNavigator extends StatelessWidget {
@@ -19,14 +20,13 @@ class PainelNavigator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Icon icon = Icon(iconData, color: Colors.white, size: 34);
-    final Text text = Text(
+    final Poppins text = Poppins(
       textContent,
-      style: GoogleFonts.poppins(
-        color: Colors.white,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
+      color: Colors.white,
+      bold: true,
+      size: 20,
     );
+
     return ElevatedButton(
       onPressed: () {
         Navigator.pushReplacement(
@@ -63,13 +63,11 @@ class ExitPainelNavigator extends StatelessWidget {
       color: Colors.redAccent,
       size: 34,
     );
-    final Text text = Text(
+    final Poppins text = Poppins(
       'Sair',
-      style: GoogleFonts.poppins(
-        color: Colors.redAccent,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
+      color: Colors.redAccent,
+      size: 20,
+      bold: true,
     );
     return ElevatedButton(
       onPressed: () {

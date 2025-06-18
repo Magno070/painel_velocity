@@ -106,7 +106,7 @@ class ScreenMenu extends StatelessWidget {
               alignment: Alignment.center,
               child: Column(
                 children: [
-                  Poppins(pageTitleText, size: 30),
+                  Poppins(pageTitleText, size: 24),
                   Expanded(
                     child: Container(
                       alignment: Alignment.center,
