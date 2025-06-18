@@ -111,6 +111,7 @@ class _CurriculosPageState extends State<CurriculosPage> {
     );
   }
 
+  //~~___________________________________________________Círculos enquanto carrega
   Widget _construirConteudoPrincipal() {
     if (_carregando) {
       return const Center(child: CircularProgressIndicator());
@@ -121,23 +122,23 @@ class _CurriculosPageState extends State<CurriculosPage> {
     } else if (_curriculos.isEmpty) {
       return Center(child: Poppins('Nenhum currículo encontrado.', size: 16));
     }
+    //~~_________________________________________________Currículos
+
     return ListView.builder(
       itemCount: _curriculos.length,
       itemBuilder:
-          (_, index) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6.0),
-            child: _ItemCurriculo(
-              usuario: _curriculos[index],
-              expandido: _indiceExpandido == index,
-              aoExpandir: (expandir) {
-                setState(() => _indiceExpandido = expandir ? index : null);
-              },
-              aoDeletar: () => _deletarCurriculo(index),
-            ),
+          (_, index) => _ItemCurriculo(
+            usuario: _curriculos[index],
+            expandido: _indiceExpandido == index,
+            aoExpandir: (expandir) {
+              setState(() => _indiceExpandido = expandir ? index : null);
+            },
+            aoDeletar: () => _deletarCurriculo(index),
           ),
     );
   }
 }
+//~~_________________________________________________Modelo do card de cada currículo
 
 class _ItemCurriculo extends StatelessWidget {
   final Usuario usuario;
@@ -163,66 +164,82 @@ class _ItemCurriculo extends StatelessWidget {
       ),
       color: Colors.grey[900],
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: ExpansionTile(
-              key: ValueKey('expansion_${usuario.id}'),
-              shape: Border.all(color: Colors.transparent),
-              controlAffinity: ListTileControlAffinity.leading,
-              initiallyExpanded: expandido,
-              onExpansionChanged: aoExpandir,
-              title: Row(
-                children: [
-                  const Icon(
-                    Icons.person_outline,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(child: Poppins(usuario.nome, bold: true)),
-                ],
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border(right: BorderSide(color: Colors.white)),
               ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _linhaIconeTexto(Icons.work_outline, usuario.cargo),
-                  _linhaIconeTexto(
-                    Icons.calendar_month,
-                    'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(usuario.dataEnvio)}',
-                  ),
-                ],
-              ),
-              children: [
-                Column(
+              child: ExpansionTile(
+                key: ValueKey('expansion_${usuario.id}'),
+                shape: Border.all(color: Colors.transparent),
+                controlAffinity: ListTileControlAffinity.leading,
+                initiallyExpanded: expandido,
+                onExpansionChanged: aoExpandir,
+                title: Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(child: Poppins(usuario.nome, bold: true)),
+                  ],
+                ),
+                subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
-                    _linhaDetalhe('Nome:', usuario.nome),
-                    _linhaDetalhe('Cargo:', usuario.cargo),
-                    _linhaDetalhe('Telefone:', usuario.telefone),
-                    _linhaDetalhe('Email:', usuario.email),
-                    _linhaDetalhe(
-                      'Data de nascimento:',
-                      DateFormat('dd/MM/yyyy').format(usuario.dataNascimento),
-                    ),
-                    _linhaDetalhe('Descrição:', usuario.descricao),
-                    const Divider(color: Colors.white),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Poppins(
-                        'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(usuario.dataEnvio)}',
-                        size: 14,
-                      ),
+                    _linhaIconeTexto(Icons.work_outline, usuario.cargo),
+                    _linhaIconeTexto(
+                      Icons.calendar_month,
+                      'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(usuario.dataEnvio)}',
                     ),
                   ],
                 ),
-              ],
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _linhaDetalhe('Nome:', usuario.nome),
+                          _linhaDetalhe('Cargo:', usuario.cargo),
+                          _linhaDetalhe('Telefone:', usuario.telefone),
+                          _linhaDetalhe('Email:', usuario.email),
+                          _linhaDetalhe(
+                            'Data de nascimento:',
+                            DateFormat(
+                              'dd/MM/yyyy',
+                            ).format(usuario.dataNascimento),
+                          ),
+                          _linhaDetalhe('Descrição:', usuario.descricao),
+                          const Divider(color: Colors.white),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Poppins(
+                              'Recebido em: ${DateFormat('dd/MM/yyyy HH:mm').format(usuario.dataEnvio)}',
+                              size: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(children: [_botaoDeletar(), _anexoButton(context)]),
+            padding: const EdgeInsets.fromLTRB(0, 12, 8, 0),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [_botaoDeletar(), _anexoButton(context)],
+              ),
+            ),
           ),
         ],
       ),
