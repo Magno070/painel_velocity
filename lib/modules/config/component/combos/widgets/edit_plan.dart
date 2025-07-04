@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:painel_velocitynet/modules/config/component/combos/service/models/plan_model.dart';
+import 'package:painel_velocitynet/modules/config/component/combos/service/plan_service.dart';
 
 class EditPlan extends StatefulWidget {
   final int index;
@@ -19,12 +20,12 @@ class EditPlan extends StatefulWidget {
 }
 
 class _EditPlanState extends State<EditPlan> {
-  // Controllers para as informações do plano
+  bool isUpdating = false;
+
   late final TextEditingController _nomeController;
   late final TextEditingController _velocidadeController;
   late final TextEditingController _valorController;
 
-  // Listas de controllers para os benefícios
   final List<TextEditingController> _beneficioNomeControllers = [];
   final List<TextEditingController> _beneficioValorControllers = [];
 
@@ -68,9 +69,9 @@ class _EditPlanState extends State<EditPlan> {
       onPressed: () {
         _showAddPlanDialog(context);
       },
-      child: const Icon(
+      child: Icon(
         Icons.edit,
-        color: Colors.yellowAccent,
+        color: Colors.yellow[400]!,
       ),
     );
   }
@@ -80,11 +81,14 @@ class _EditPlanState extends State<EditPlan> {
       context: context,
       builder: (dialogContext) {
         return Dialog(
+          backgroundColor: Colors.grey[900],
+          elevation: 3,
+          shadowColor: Colors.white70,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(
-              maxWidth: 1200,
+              maxWidth: 900,
             ),
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -98,49 +102,21 @@ class _EditPlanState extends State<EditPlan> {
                         style: GoogleFonts.poppins(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: Colors.yellow[400]!,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                        ),
                         onPressed: () => Navigator.of(dialogContext).pop(),
                       ),
                     ],
                   ),
                   const Divider(height: 24),
                   _editPlanControllers(),
-                  DefaultTabController(
-                    length: 2,
-                    child: Column(
-                      children: [
-                        TabBar(tabs: [
-                          Tab(
-                              child: Text(
-                            'Benefícios',
-                            style: GoogleFonts.poppins(
-                                color: Colors.blue[800], fontSize: 20),
-                          )),
-                          Tab(
-                              child: Text(
-                            'Detalhes',
-                            style: GoogleFonts.poppins(
-                                color: Colors.blue[800], fontSize: 20),
-                          )),
-                        ]),
-                        SizedBox(
-                          height: 350, // ajuste conforme necessário
-                          child: TabBarView(
-                            children: [
-                              SingleChildScrollView(
-                                child: _editBeneficiosController(),
-                              ),
-                              Placeholder(),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildPlanTabs(),
                   const SizedBox(
                     height: 12,
                   ),
@@ -154,16 +130,53 @@ class _EditPlanState extends State<EditPlan> {
     );
   }
 
+  _buildPlanTabs() {
+    Color tabColor = Colors.yellow[400]!;
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          TabBar(tabs: [
+            Tab(
+                child: Text(
+              'Benefícios',
+              style: GoogleFonts.poppins(color: tabColor, fontSize: 18),
+            )),
+            Tab(
+                child: Text(
+              'Detalhes',
+              style: GoogleFonts.poppins(color: tabColor, fontSize: 18),
+            )),
+          ]),
+          SizedBox(
+            height: 350, // ajuste conforme necessário
+            child: TabBarView(
+              children: [
+                SingleChildScrollView(
+                  child: _editBeneficiosController(),
+                ),
+                const Placeholder(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   _buildTextField(TextEditingController controller, String labelText,
       {String prefixText = ''}) {
     return Expanded(
       child: TextFormField(
-          controller: controller,
-          decoration: InputDecoration(
-              labelText: labelText,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              prefixText: prefixText)),
+        controller: controller,
+        decoration: InputDecoration(
+            labelText: labelText,
+            labelStyle: GoogleFonts.poppins(color: Colors.yellow[400]),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            prefixText: prefixText,
+            prefixStyle: GoogleFonts.poppins(color: Colors.white)),
+        style: GoogleFonts.poppins(color: Colors.white),
+      ),
     );
   }
 
@@ -177,7 +190,7 @@ class _EditPlanState extends State<EditPlan> {
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Colors.blue[800],
+              color: Colors.white,
             ),
           ),
         ),
@@ -207,16 +220,32 @@ class _EditPlanState extends State<EditPlan> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          Align(
-            alignment: Alignment.topLeft,
-            child: Text(
-              'Informações dos benefícios',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.blue[800],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Align(
+                alignment: Alignment.topLeft,
+                child: Text(
+                  'Informações dos benefícios',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            ),
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                child: Text(
+                  'Adicionar benefício',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+              )
+            ],
+          ),
+          const SizedBox(
+            height: 8,
           ),
           ListView.builder(
             shrinkWrap: true,
@@ -285,36 +314,75 @@ class _EditPlanState extends State<EditPlan> {
         ),
         const SizedBox(width: 12),
         ElevatedButton(
-          onPressed: () {
-            final originalPlan = widget.response[widget.index];
+          onPressed: isUpdating
+              ? null
+              : () async {
+                  final originalPlan = widget.response[widget.index];
 
-            final updatedPlan = Plan(
-              nome: _nomeController.text.trim().isEmpty
-                  ? originalPlan.nome
-                  : _nomeController.text.trim(),
-              velocidade: _velocidadeController.text.trim().isEmpty
-                  ? originalPlan.velocidade
-                  : int.tryParse(_velocidadeController.text.trim()) ??
-                      originalPlan.velocidade,
-              valor: _valorController.text.trim().isEmpty
-                  ? originalPlan.valor
-                  : double.tryParse(_valorController.text.trim()) ??
-                      originalPlan.valor,
-              beneficios: _getUpdatedBeneficios(originalPlan.beneficios),
-            );
-
-            setState(() {
-              widget.response[widget.index] = updatedPlan;
-            });
-            widget.onPlanUpdated();
-            Navigator.of(dialogContext).pop();
-          },
+                  final updatedPlan = Plan(
+                    id: originalPlan.id,
+                    nome: _nomeController.text.trim().isEmpty
+                        ? originalPlan.nome
+                        : _nomeController.text.trim(),
+                    velocidade: _velocidadeController.text.trim().isEmpty
+                        ? originalPlan.velocidade
+                        : int.tryParse(_velocidadeController.text.trim()) ??
+                            originalPlan.velocidade,
+                    valor: _valorController.text.trim().isEmpty
+                        ? originalPlan.valor
+                        : double.tryParse(_valorController.text.trim()) ??
+                            originalPlan.valor,
+                    beneficios: _getUpdatedBeneficios(originalPlan.beneficios),
+                  );
+                  setState(() {
+                    isUpdating = true;
+                  });
+                  try {
+                    await PlanService().updatePlan(
+                      updatedPlan.id,
+                      updatedPlan.toJsonForUpdate(),
+                    );
+                    setState(() {
+                      widget.response[widget.index] = updatedPlan;
+                    });
+                    widget.onPlanUpdated();
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      const SnackBar(
+                        content: Text('Plano atualizado com sucesso!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    Navigator.of(dialogContext).pop();
+                  } catch (e) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      SnackBar(
+                        content: Text('Erro ao atualizar plano: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  } finally {
+                    setState(() {
+                      isUpdating = false;
+                    });
+                  }
+                },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue[800],
             foregroundColor: Colors.white,
           ),
-          child: Text('SALVAR',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          child: isUpdating
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Text(
+                  'SALVAR',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                ),
         ),
       ],
     );

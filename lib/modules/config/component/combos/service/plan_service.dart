@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:painel_velocitynet/modules/config/component/combos/service/models/plan_model.dart';
 
 class PlanService {
-  static const String _baseUrl = 'https://api.velocitynet.com.br/api/v1';
+  static const String baseUrl = 'https://api.velocitynet.com.br/api/v1';
   static const Duration _timeout = Duration(seconds: 15);
   static const int _maxRetries = 2;
 
@@ -13,8 +13,8 @@ class PlanService {
       try {
         final response = await http
             .get(
-              Uri.parse('$_baseUrl/planos'),
-              headers: _buildHeaders(),
+              Uri.parse('$baseUrl/planos'),
+              headers: buildHeaders(),
             )
             .timeout(_timeout);
 
@@ -36,8 +36,29 @@ class PlanService {
       try {
         final response = await http
             .post(
-              Uri.parse('$_baseUrl/criarPlanos'),
-              headers: _buildHeaders(),
+              Uri.parse('$baseUrl/criarPlanos'),
+              headers: buildHeaders(),
+              body: jsonEncode(correctedData),
+            )
+            .timeout(_timeout);
+
+        return _handleResponse(response, (_) => null);
+      } catch (e) {
+        if (attempt == _maxRetries) rethrow;
+        await Future.delayed(_retryDelay(attempt));
+      }
+    }
+  }
+
+  Future<void> updatePlan(String id, Map<String, dynamic> planData) async {
+    final correctedData = _fixDataStructure(planData);
+
+    for (int attempt = 1; attempt <= _maxRetries; attempt++) {
+      try {
+        final response = await http
+            .put(
+              Uri.parse('$baseUrl/atualizarPlanos/$id'),
+              headers: buildHeaders(),
               body: jsonEncode(correctedData),
             )
             .timeout(_timeout);
@@ -51,11 +72,10 @@ class PlanService {
   }
 
   // Métodos auxiliares
-  Map<String, String> _buildHeaders() {
+  Map<String, String> buildHeaders() {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      // Adicione outros headers necessários (como auth)
     };
   }
 
@@ -80,11 +100,11 @@ class PlanService {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return onSuccess(jsonDecode(response.body));
     } else {
-      throw _createException(response);
+      throw createException(response);
     }
   }
 
-  Exception _createException(http.Response response) {
+  Exception createException(http.Response response) {
     final status = response.statusCode;
     final message = 'HTTP $status: ${response.reasonPhrase}';
     final body = response.body.isNotEmpty ? jsonDecode(response.body) : null;

@@ -1,10 +1,12 @@
 class Plan {
+  final String id;
   final String nome;
   final int velocidade;
   final double valor;
   final List<Beneficio> beneficios;
 
   Plan({
+    required this.id,
     required this.nome,
     required this.velocidade,
     required this.valor,
@@ -18,15 +20,26 @@ class Plan {
         .toList();
 
     return Plan(
-      nome: json['nome'],
-      velocidade: json['velocidade'].toInt(),
-      valor: json['valor'].toDouble(),
+      id: json['_id']?.toString() ?? '',
+      nome: json['nome'] ?? '',
+      velocidade: json['velocidade']?.toInt() ?? 0,
+      valor: json['valor']?.toDouble() ?? 0.0,
       beneficios: beneficios,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'nome': nome,
+      'velocidade': velocidade,
+      'valor': valor,
+      'beneficios': beneficios.map((b) => b.toJson()).toList(),
+    };
+  }
+
+  Map<String, dynamic> toJsonForUpdate() {
+    return {
+      '_id': id,
       'nome': nome,
       'velocidade': velocidade,
       'valor': valor,
