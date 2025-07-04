@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:painel_velocitynet/modules/config/component/combos/service/models/plan_model.dart';
@@ -62,15 +64,15 @@ class _EditPlanState extends State<EditPlan> {
   Widget build(
     BuildContext context,
   ) {
-    return ElevatedButton(
-        onPressed: () {
-          _showAddPlanDialog(context);
-        },
-        child: Text(
-          'EDITAR',
-          style: GoogleFonts.poppins(
-              color: Colors.blue[800], fontWeight: FontWeight.bold),
-        ));
+    return TextButton(
+      onPressed: () {
+        _showAddPlanDialog(context);
+      },
+      child: const Icon(
+        Icons.edit,
+        color: Colors.yellowAccent,
+      ),
+    );
   }
 
   void _showAddPlanDialog(BuildContext context) {
@@ -82,7 +84,7 @@ class _EditPlanState extends State<EditPlan> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(
-              maxWidth: 600,
+              maxWidth: 1200,
             ),
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -107,14 +109,36 @@ class _EditPlanState extends State<EditPlan> {
                   ),
                   const Divider(height: 24),
                   _editPlanControllers(),
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _editBeneficiosController(),
-                        ],
-                      ),
+                  DefaultTabController(
+                    length: 2,
+                    child: Column(
+                      children: [
+                        TabBar(tabs: [
+                          Tab(
+                              child: Text(
+                            'Benefícios',
+                            style: GoogleFonts.poppins(
+                                color: Colors.blue[800], fontSize: 20),
+                          )),
+                          Tab(
+                              child: Text(
+                            'Detalhes',
+                            style: GoogleFonts.poppins(
+                                color: Colors.blue[800], fontSize: 20),
+                          )),
+                        ]),
+                        SizedBox(
+                          height: 350, // ajuste conforme necessário
+                          child: TabBarView(
+                            children: [
+                              SingleChildScrollView(
+                                child: _editBeneficiosController(),
+                              ),
+                              Placeholder(),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(
@@ -179,58 +203,74 @@ class _EditPlanState extends State<EditPlan> {
 
   _editBeneficiosController() {
     final List<Beneficio> beneficios = widget.response[widget.index].beneficios;
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.topLeft,
-          child: Text(
-            'Informações dos benefícios',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.blue[800],
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.topLeft,
+            child: Text(
+              'Informações dos benefícios',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue[800],
+              ),
             ),
           ),
-        ),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: beneficios.length,
-          itemBuilder: (context, index) {
-            return Card(
-              elevation: 2,
-              shadowColor: Colors.black,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                            child: _buildTextField(
-                                _beneficioNomeControllers[index], 'Nome')),
-                        const SizedBox(width: 16),
-                        Expanded(
-                            child: _buildTextField(
-                                _beneficioValorControllers[index], 'Valor',
-                                prefixText: 'R\$ ')),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 12,
-                    ),
-                    const SizedBox(
-                      height: 60,
-                      width: 200,
-                      child: Placeholder(),
-                    ),
-                  ],
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: beneficios.length,
+            itemBuilder: (context, index) {
+              return Card(
+                elevation: 3,
+                shadowColor: Colors.black,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: SizedBox(
+                          height: 60,
+                          width: 200,
+                          child: Image.memory(
+                            base64Decode(beneficios[index].image),
+                            fit: BoxFit.fitHeight,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(
+                        width: 16,
+                      ),
+                      Expanded(
+                          flex: 2,
+                          child: _buildTextField(
+                              _beneficioNomeControllers[index], 'Nome')),
+                      const SizedBox(width: 16),
+                      Expanded(
+                          flex: 2,
+                          child: _buildTextField(
+                              _beneficioValorControllers[index], 'Valor',
+                              prefixText: 'R\$ ')),
+                      const SizedBox(width: 16),
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(
+                          Icons.delete,
+                          size: 28,
+                        ),
+                        color: Colors.red,
+                      )
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-      ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 

@@ -170,12 +170,12 @@ class _ItemCurriculo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      elevation: 1,
-      shadowColor: expandido ? Colors.greenAccent : Colors.white70,
+      elevation: 3,
+      shadowColor: Colors.white70,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: expandido ? Colors.white70 : Colors.transparent,
+          color: expandido ? Colors.green[800]! : Colors.transparent,
         ),
       ),
       color: Colors.grey[900],
