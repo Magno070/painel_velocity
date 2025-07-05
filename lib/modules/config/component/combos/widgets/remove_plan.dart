@@ -5,8 +5,14 @@ import 'package:painel_velocitynet/modules/config/component/combos/service/model
 class RemovePlan extends StatelessWidget {
   final List<Plan> plans;
   final int index;
+  // final VoidCallback onPlanRemoved;
 
-  const RemovePlan({super.key, required this.plans, required this.index});
+  const RemovePlan({
+    super.key,
+    required this.plans,
+    required this.index,
+    // required this.onPlanRemoved
+  });
 
   void _showRemoveConfirmationDialog(BuildContext context, int index) {
     final plan = plans[index];
@@ -50,7 +56,9 @@ class RemovePlan extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.delete, color: Colors.redAccent),
-      onPressed: () => _showRemoveConfirmationDialog(context, index),
+      onPressed: () {
+        _showRemoveConfirmationDialog(context, index);
+      },
     );
   }
 }

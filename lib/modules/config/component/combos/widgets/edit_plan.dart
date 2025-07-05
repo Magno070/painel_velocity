@@ -1,7 +1,7 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'package:painel_velocitynet/modules/config/component/combos/service/models/plan_model.dart';
 import 'package:painel_velocitynet/modules/config/component/combos/service/plan_service.dart';
 
@@ -9,25 +9,29 @@ class EditPlan extends StatefulWidget {
   final int index;
   final VoidCallback onPlanUpdated;
   final List<Plan> response;
-  const EditPlan(
-      {super.key,
-      required this.index,
-      required this.response,
-      required this.onPlanUpdated});
+
+  const EditPlan({
+    super.key,
+    required this.index,
+    required this.response,
+    required this.onPlanUpdated,
+  });
 
   @override
   State<EditPlan> createState() => _EditPlanState();
 }
 
-class _EditPlanState extends State<EditPlan> {
-  bool isUpdating = false;
-
+class _EditPlanState extends State<EditPlan>
+    with SingleTickerProviderStateMixin {
+  bool _isLoading = false;
   late final TextEditingController _nomeController;
   late final TextEditingController _velocidadeController;
   late final TextEditingController _valorController;
 
   final List<TextEditingController> _beneficioNomeControllers = [];
   final List<TextEditingController> _beneficioValorControllers = [];
+
+  late final TabController _tabController;
 
   @override
   void initState() {
@@ -38,13 +42,14 @@ class _EditPlanState extends State<EditPlan> {
         TextEditingController(text: plan.velocidade.toString());
     _valorController = TextEditingController(text: plan.valor.toString());
 
-    final List<Beneficio> beneficios = plan.beneficios;
-    for (var beneficio in beneficios) {
+    for (var beneficio in plan.beneficios) {
       _beneficioNomeControllers
           .add(TextEditingController(text: beneficio.nome));
       _beneficioValorControllers
           .add(TextEditingController(text: beneficio.valor.toString()));
     }
+
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -52,110 +57,180 @@ class _EditPlanState extends State<EditPlan> {
     _nomeController.dispose();
     _velocidadeController.dispose();
     _valorController.dispose();
-    for (var controller in _beneficioNomeControllers) {
-      controller.dispose();
-    }
-    for (var controller in _beneficioValorControllers) {
-      controller.dispose();
-    }
+    for (final c in _beneficioNomeControllers) c.dispose();
+    for (final c in _beneficioValorControllers) c.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return TextButton(
-      onPressed: () {
-        _showAddPlanDialog(context);
-      },
-      child: Icon(
-        Icons.edit,
-        color: Colors.yellow[400]!,
-      ),
-    );
+  Future<void> _saveEditedPlan(BuildContext dialogContext) async {
+    try {
+      final original = widget.response[widget.index];
+      final updated = Plan(
+        id: original.id,
+        nome: _nomeController.text.trim().isEmpty
+            ? original.nome
+            : _nomeController.text.trim(),
+        velocidade: int.tryParse(_velocidadeController.text.trim()) ??
+            original.velocidade,
+        valor: double.tryParse(_valorController.text.trim()) ?? original.valor,
+        beneficios: _getUpdatedBeneficios(original.beneficios),
+      );
+
+      await PlanService().updatePlan(updated.id, updated.toJsonForUpdate());
+
+      if (!mounted) return;
+      setState(() => widget.response[widget.index] = updated);
+      widget.onPlanUpdated();
+
+      Navigator.of(dialogContext).pop();
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        const SnackBar(
+            content: Text('Plano atualizado com sucesso!'),
+            backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        SnackBar(
+            content: Text('Erro ao atualizar plano: $e'),
+            backgroundColor: Colors.red),
+      );
+    }
   }
 
-  void _showAddPlanDialog(BuildContext context) {
-    showDialog(
+  @override
+  Widget build(BuildContext context) {
+    return _isLoading
+        ? const SizedBox(
+            width: 24,
+            height: 24,
+            child:
+                CircularProgressIndicator(strokeWidth: 2, color: Colors.yellow),
+          )
+        : TextButton(
+            onPressed: () async {
+              setState(() => _isLoading = true);
+              await Future.delayed(const Duration(milliseconds: 50));
+              await _showEditModal(context);
+              if (mounted) setState(() => _isLoading = false);
+            },
+            child: Icon(Icons.edit, color: Colors.yellow[400]),
+          );
+  }
+
+  Future<void> _showEditModal(BuildContext context) async {
+    await showModalBottomSheet(
       context: context,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.grey[900],
-          elevation: 3,
-          shadowColor: Colors.white70,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 900,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
+      isScrollControlled: true,
+      backgroundColor: Colors.grey[900],
+      builder: (BuildContext dialogContext) {
+        bool localIsUpdating = false;
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 12,
+                right: 12,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 12,
+              ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Editar plano',
-                        style: GoogleFonts.poppins(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.yellow[400]!,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                        ),
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 24),
-                  _editPlanControllers(),
-                  _buildPlanTabs(),
-                  const SizedBox(
-                    height: 12,
-                  ),
-                  _editActions(dialogContext)
+                  _buildHeader(dialogContext, localIsUpdating),
+                  const SizedBox(height: 16),
+                  _buildPlanControllers(),
+                  const SizedBox(height: 16),
+                  Expanded(child: SingleChildScrollView(child: _buildTabs())),
+                  const SizedBox(height: 8),
+                  _buildActions(
+                      dialogContext,
+                      setModalState,
+                      () => localIsUpdating = true,
+                      () => localIsUpdating = false),
                 ],
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
   }
 
-  _buildPlanTabs() {
-    Color tabColor = Colors.yellow[400]!;
-    return DefaultTabController(
-      length: 2,
+  Widget _buildHeader(BuildContext context, bool isUpdating) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('Editar plano',
+            style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.yellow[400])),
+        IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: isUpdating ? null : () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlanControllers() {
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.topLeft,
+          child: Text(
+            'Informações do plano',
+            style: GoogleFonts.poppins(
+                fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            _buildTextField(_nomeController, 'Nome do plano'),
+            const SizedBox(width: 16),
+            _buildTextField(_velocidadeController, 'Velocidade',
+                prefixText: 'Mbps '),
+            const SizedBox(width: 16),
+            _buildTextField(_valorController, 'Valor', prefixText: 'R\$ '),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabs() {
+    final beneficios = widget.response[widget.index].beneficios;
+
+    return SizedBox(
+      height: beneficios.length * 100,
       child: Column(
         children: [
-          TabBar(tabs: [
-            Tab(
-                child: Text(
-              'Benefícios',
-              style: GoogleFonts.poppins(color: tabColor, fontSize: 18),
-            )),
-            Tab(
-                child: Text(
-              'Detalhes',
-              style: GoogleFonts.poppins(color: tabColor, fontSize: 18),
-            )),
-          ]),
-          SizedBox(
-            height: 350, // ajuste conforme necessário
+          TabBar(
+            controller: _tabController,
+            labelColor: Colors.black,
+            labelStyle:
+                GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+            unselectedLabelStyle: GoogleFonts.poppins(fontSize: 16),
+            unselectedLabelColor: Colors.white,
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicator: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.yellow[400],
+            ),
+            tabs: const [
+              Tab(child: Text('Benefícios')),
+              Tab(child: Text('Detalhes')),
+            ],
+          ),
+          Expanded(
             child: TabBarView(
+              controller: _tabController,
               children: [
-                SingleChildScrollView(
-                  child: _editBeneficiosController(),
-                ),
-                const Placeholder(),
+                _buildBeneficios(),
+                const Center(child: Placeholder()),
               ],
             ),
           ),
@@ -164,135 +239,65 @@ class _EditPlanState extends State<EditPlan> {
     );
   }
 
-  _buildTextField(TextEditingController controller, String labelText,
-      {String prefixText = ''}) {
-    return Expanded(
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-            labelText: labelText,
-            labelStyle: GoogleFonts.poppins(color: Colors.yellow[400]),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            prefixText: prefixText,
-            prefixStyle: GoogleFonts.poppins(color: Colors.white)),
-        style: GoogleFonts.poppins(color: Colors.white),
-      ),
-    );
-  }
+  Widget _buildBeneficios() {
+    final beneficios = widget.response[widget.index].beneficios;
 
-  _editPlanControllers() {
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.topLeft,
-          child: Text(
-            'Informações do plano',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        const SizedBox(
-          height: 16,
-        ),
-        Row(
-          children: [
-            _buildTextField(
-              _nomeController,
-              'Nome do plano',
-            ),
-            const SizedBox(width: 16),
-            _buildTextField(_velocidadeController, 'Velocidade',
-                prefixText: 'Mbps '),
-            const SizedBox(width: 16),
-            _buildTextField(_valorController, 'Valor', prefixText: 'R\$ '),
-          ],
-        )
-      ],
-    );
-  }
-
-  _editBeneficiosController() {
-    final List<Beneficio> beneficios = widget.response[widget.index].beneficios;
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return SingleChildScrollView(
       child: Column(
         children: [
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Align(
-                alignment: Alignment.topLeft,
-                child: Text(
-                  'Informações dos benefícios',
+              Text('Informações dos benefícios',
                   style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white)),
               ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                child: Text(
-                  'Adicionar benefício',
-                  style: GoogleFonts.poppins(color: Colors.white),
-                ),
-              )
+                child: Text('Adicionar benefício',
+                    style:
+                        GoogleFonts.poppins(color: Colors.white, fontSize: 16)),
+              ),
             ],
           ),
-          const SizedBox(
-            height: 8,
-          ),
+          const SizedBox(height: 12),
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: beneficios.length,
             itemBuilder: (context, index) {
-              return Card(
-                elevation: 3,
-                shadowColor: Colors.black,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: SizedBox(
-                          height: 60,
-                          width: 200,
-                          child: Image.memory(
-                            base64Decode(beneficios[index].image),
-                            fit: BoxFit.fitHeight,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 16,
-                      ),
-                      Expanded(
-                          flex: 2,
+              return SizedBox(
+                height: 80,
+                child: Card(
+                  color: Colors.grey[850],
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: _buildImagemBeneficio(beneficios[index])),
+                        const SizedBox(width: 16),
+                        Expanded(
                           child: _buildTextField(
-                              _beneficioNomeControllers[index], 'Nome')),
-                      const SizedBox(width: 16),
-                      Expanded(
-                          flex: 2,
+                              _beneficioNomeControllers[index], 'Nome'),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
                           child: _buildTextField(
                               _beneficioValorControllers[index], 'Valor',
-                              prefixText: 'R\$ ')),
-                      const SizedBox(width: 16),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.delete,
-                          size: 28,
+                              prefixText: 'R\$ '),
                         ),
-                        color: Colors.red,
-                      )
-                    ],
+                        const SizedBox(width: 16),
+                        IconButton(
+                          icon: const Icon(Icons.delete,
+                              size: 28, color: Colors.red),
+                          onPressed: () {},
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -303,88 +308,69 @@ class _EditPlanState extends State<EditPlan> {
     );
   }
 
-  _editActions(dialogContext) {
+  Widget _buildImagemBeneficio(Beneficio beneficio) {
+    return Card(
+      elevation: 1,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          height: 55,
+          child: Image.memory(
+            base64Decode(beneficio.image),
+            fit: BoxFit.fill,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActions(
+    BuildContext context,
+    StateSetter setModalState,
+    VoidCallback startLoading,
+    VoidCallback stopLoading,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
+          onPressed: () => Navigator.of(context).pop(),
           child: Text('CANCELAR',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold, color: Colors.white70)),
         ),
         const SizedBox(width: 12),
         ElevatedButton(
-          onPressed: isUpdating
-              ? null
-              : () async {
-                  final originalPlan = widget.response[widget.index];
-
-                  final updatedPlan = Plan(
-                    id: originalPlan.id,
-                    nome: _nomeController.text.trim().isEmpty
-                        ? originalPlan.nome
-                        : _nomeController.text.trim(),
-                    velocidade: _velocidadeController.text.trim().isEmpty
-                        ? originalPlan.velocidade
-                        : int.tryParse(_velocidadeController.text.trim()) ??
-                            originalPlan.velocidade,
-                    valor: _valorController.text.trim().isEmpty
-                        ? originalPlan.valor
-                        : double.tryParse(_valorController.text.trim()) ??
-                            originalPlan.valor,
-                    beneficios: _getUpdatedBeneficios(originalPlan.beneficios),
-                  );
-                  setState(() {
-                    isUpdating = true;
-                  });
-                  try {
-                    await PlanService().updatePlan(
-                      updatedPlan.id,
-                      updatedPlan.toJsonForUpdate(),
-                    );
-                    setState(() {
-                      widget.response[widget.index] = updatedPlan;
-                    });
-                    widget.onPlanUpdated();
-                    ScaffoldMessenger.of(dialogContext).showSnackBar(
-                      const SnackBar(
-                        content: Text('Plano atualizado com sucesso!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    Navigator.of(dialogContext).pop();
-                  } catch (e) {
-                    ScaffoldMessenger.of(dialogContext).showSnackBar(
-                      SnackBar(
-                        content: Text('Erro ao atualizar plano: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  } finally {
-                    setState(() {
-                      isUpdating = false;
-                    });
-                  }
-                },
+          onPressed: () async {
+            setModalState(() => startLoading());
+            await _saveEditedPlan(context);
+            if (mounted) setModalState(() => stopLoading());
+          },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[800],
-            foregroundColor: Colors.white,
+            backgroundColor: Colors.yellow[500],
+            foregroundColor: Colors.black,
           ),
-          child: isUpdating
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-              : Text(
-                  'SALVAR',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                ),
+          child: Text('SALVAR',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         ),
       ],
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label,
+      {String prefixText = ''}) {
+    return Expanded(
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.poppins(color: Colors.yellow[400]),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          prefixText: prefixText,
+          prefixStyle: GoogleFonts.poppins(color: Colors.white),
+        ),
+        style: GoogleFonts.poppins(color: Colors.white),
+      ),
     );
   }
 
@@ -399,7 +385,7 @@ class _EditPlanState extends State<EditPlan> {
             ? original[i].valor
             : double.tryParse(_beneficioValorControllers[i].text.trim()) ??
                 original[i].valor,
-        image: original[i].image, // não muda aqui
+        image: original[i].image,
       ));
     }
     return result;

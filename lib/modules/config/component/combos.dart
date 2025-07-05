@@ -17,21 +17,18 @@ class _CombosState extends State<Combos> {
         length: 2,
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SizedBox(
-                height: 36,
-                child: TabBar(
-                  tabs: _tabs(),
-                  tabAlignment: TabAlignment.center,
-                  dividerHeight: 0,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.grey,
-                  indicator: BoxDecoration(
-                      color: Colors.grey[800],
-                      borderRadius: BorderRadius.circular(10)),
-                ),
+            SizedBox(
+              height: 36,
+              child: TabBar(
+                tabs: _tabs(),
+                tabAlignment: TabAlignment.center,
+                dividerHeight: 0,
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.grey,
+                indicator: BoxDecoration(
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(10)),
               ),
             ),
             const Expanded(
