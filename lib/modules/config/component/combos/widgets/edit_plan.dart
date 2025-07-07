@@ -1,9 +1,11 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:painel_velocitynet/modules/config/component/combos/service/models/plan_model.dart';
 import 'package:painel_velocitynet/modules/config/component/combos/service/plan_service.dart';
+import 'package:painel_velocitynet/modules/config/component/combos/widgets/edit_plan/benefits_edit.dart'
+    as benefits_edit;
+import 'package:painel_velocitynet/modules/config/component/combos/widgets/edit_plan/deitails_edit.dart';
 
 class EditPlan extends StatefulWidget {
   final int index;
@@ -27,11 +29,9 @@ class _EditPlanState extends State<EditPlan>
   late final TextEditingController _nomeController;
   late final TextEditingController _velocidadeController;
   late final TextEditingController _valorController;
-
-  final List<TextEditingController> _beneficioNomeControllers = [];
-  final List<TextEditingController> _beneficioValorControllers = [];
-
   late final TabController _tabController;
+  final GlobalKey<benefits_edit.BenefitsEditState> _benefitsKey =
+      GlobalKey<benefits_edit.BenefitsEditState>();
 
   @override
   void initState() {
@@ -42,13 +42,6 @@ class _EditPlanState extends State<EditPlan>
         TextEditingController(text: plan.velocidade.toString());
     _valorController = TextEditingController(text: plan.valor.toString());
 
-    for (var beneficio in plan.beneficios) {
-      _beneficioNomeControllers
-          .add(TextEditingController(text: beneficio.nome));
-      _beneficioValorControllers
-          .add(TextEditingController(text: beneficio.valor.toString()));
-    }
-
     _tabController = TabController(length: 2, vsync: this);
   }
 
@@ -57,8 +50,6 @@ class _EditPlanState extends State<EditPlan>
     _nomeController.dispose();
     _velocidadeController.dispose();
     _valorController.dispose();
-    for (final c in _beneficioNomeControllers) c.dispose();
-    for (final c in _beneficioValorControllers) c.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -74,7 +65,8 @@ class _EditPlanState extends State<EditPlan>
         velocidade: int.tryParse(_velocidadeController.text.trim()) ??
             original.velocidade,
         valor: double.tryParse(_valorController.text.trim()) ?? original.valor,
-        beneficios: _getUpdatedBeneficios(original.beneficios),
+        beneficios: _benefitsKey.currentState?.getUpdatedBeneficios() ??
+            original.beneficios,
       );
 
       await PlanService().updatePlan(updated.id, updated.toJsonForUpdate());
@@ -83,12 +75,12 @@ class _EditPlanState extends State<EditPlan>
       setState(() => widget.response[widget.index] = updated);
       widget.onPlanUpdated();
 
-      Navigator.of(dialogContext).pop();
       ScaffoldMessenger.of(dialogContext).showSnackBar(
         const SnackBar(
             content: Text('Plano atualizado com sucesso!'),
             backgroundColor: Colors.green),
       );
+      Navigator.of(dialogContext).pop();
     } catch (e) {
       ScaffoldMessenger.of(dialogContext).showSnackBar(
         SnackBar(
@@ -102,19 +94,19 @@ class _EditPlanState extends State<EditPlan>
   Widget build(BuildContext context) {
     return _isLoading
         ? const SizedBox(
-            width: 24,
-            height: 24,
+            width: 18,
+            height: 18,
             child:
                 CircularProgressIndicator(strokeWidth: 2, color: Colors.yellow),
           )
-        : TextButton(
+        : IconButton(
             onPressed: () async {
               setState(() => _isLoading = true);
               await Future.delayed(const Duration(milliseconds: 50));
               await _showEditModal(context);
               if (mounted) setState(() => _isLoading = false);
             },
-            child: Icon(Icons.edit, color: Colors.yellow[400]),
+            icon: Icon(Icons.edit, color: Colors.yellow[400]),
           );
   }
 
@@ -209,6 +201,7 @@ class _EditPlanState extends State<EditPlan>
       child: Column(
         children: [
           TabBar(
+            dividerHeight: 0,
             controller: _tabController,
             labelColor: Colors.black,
             labelStyle:
@@ -228,10 +221,7 @@ class _EditPlanState extends State<EditPlan>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: [
-                _buildBeneficios(),
-                const Center(child: Placeholder()),
-              ],
+              children: [_buildBeneficios(), _buildDetails()],
             ),
           ),
         ],
@@ -240,87 +230,15 @@ class _EditPlanState extends State<EditPlan>
   }
 
   Widget _buildBeneficios() {
-    final beneficios = widget.response[widget.index].beneficios;
-
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Informações dos benefícios',
-                  style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white)),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                child: Text('Adicionar benefício',
-                    style:
-                        GoogleFonts.poppins(color: Colors.white, fontSize: 16)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: beneficios.length,
-            itemBuilder: (context, index) {
-              return SizedBox(
-                height: 80,
-                child: Card(
-                  color: Colors.grey[850],
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                            child: _buildImagemBeneficio(beneficios[index])),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildTextField(
-                              _beneficioNomeControllers[index], 'Nome'),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildTextField(
-                              _beneficioValorControllers[index], 'Valor',
-                              prefixText: 'R\$ '),
-                        ),
-                        const SizedBox(width: 16),
-                        IconButton(
-                          icon: const Icon(Icons.delete,
-                              size: 28, color: Colors.red),
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+    return benefits_edit.BenefitsEdit(
+      key: _benefitsKey,
+      initialBenefits: widget.response[widget.index].beneficios,
     );
   }
 
-  Widget _buildImagemBeneficio(Beneficio beneficio) {
-    return Card(
-      elevation: 1,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: SizedBox(
-          height: 55,
-          child: Image.memory(
-            base64Decode(beneficio.image),
-            fit: BoxFit.fill,
-          ),
-        ),
-      ),
+  Widget _buildDetails() {
+    return EditDetails(
+      beneficios: widget.response[widget.index].beneficios,
     );
   }
 
@@ -372,22 +290,5 @@ class _EditPlanState extends State<EditPlan>
         style: GoogleFonts.poppins(color: Colors.white),
       ),
     );
-  }
-
-  List<Beneficio> _getUpdatedBeneficios(List<Beneficio> original) {
-    final List<Beneficio> result = [];
-    for (int i = 0; i < _beneficioNomeControllers.length; i++) {
-      result.add(Beneficio(
-        nome: _beneficioNomeControllers[i].text.trim().isEmpty
-            ? original[i].nome
-            : _beneficioNomeControllers[i].text.trim(),
-        valor: _beneficioValorControllers[i].text.trim().isEmpty
-            ? original[i].valor
-            : double.tryParse(_beneficioValorControllers[i].text.trim()) ??
-                original[i].valor,
-        image: original[i].image,
-      ));
-    }
-    return result;
   }
 }

@@ -59,6 +59,14 @@ class Beneficio {
     required this.image,
   });
 
+  Beneficio copyWith({String? nome, double? valor, String? image}) {
+    return Beneficio(
+      nome: nome ?? this.nome,
+      valor: valor ?? this.valor,
+      image: image ?? this.image,
+    );
+  }
+
   factory Beneficio.fromJson(Map<String, dynamic> json) {
     return Beneficio(
       nome: json['nome'],

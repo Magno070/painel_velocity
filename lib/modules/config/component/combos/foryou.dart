@@ -17,7 +17,7 @@ class ForYou extends StatefulWidget {
 class _ForYouState extends State<ForYou> {
   final _planService = PlanService();
 
-  bool _isLoading = true; // começa carregando
+  bool _isLoading = true;
   String? _errorMessage;
   List<Plan> _plans = [];
 

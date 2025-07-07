@@ -71,7 +71,8 @@ class PlanService {
     }
   }
 
-  // Métodos auxiliares
+  //^ Métodos auxiliares
+
   Map<String, String> buildHeaders() {
     return {
       'Content-Type': 'application/json',
