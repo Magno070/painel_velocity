@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image/image.dart' as img;
 
 import 'package:painel_velocitynet/modules/config/component/combos/service/models/plan_model.dart';
 
@@ -20,21 +21,19 @@ class BenefitsEdit extends StatefulWidget {
 }
 
 class BenefitsEditState extends State<BenefitsEdit> {
-  // Usamos um placeholder para a imagem de novos benefícios.
-  // Este é um GIF transparente de 1x1 pixel em base64.
+  //placeholder
   static const String _placeholderImageBase64 =
       'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
   late List<Beneficio> _localBenefits;
   final List<TextEditingController> _nameControllers = [];
   final List<TextEditingController> _valueControllers = [];
-  // Guarda o índice da imagem que está sendo carregada
   int? _pickingImageIndex;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    // Clonamos a lista inicial para poder modificá-la localmente.
     _localBenefits = List<Beneficio>.from(widget.initialBenefits);
     for (var benefit in _localBenefits) {
       _nameControllers.add(TextEditingController(text: benefit.nome));
@@ -45,6 +44,7 @@ class BenefitsEditState extends State<BenefitsEdit> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     for (final controller in _nameControllers) {
       controller.dispose();
     }
@@ -54,27 +54,29 @@ class BenefitsEditState extends State<BenefitsEdit> {
     super.dispose();
   }
 
-  // Método público para que o widget pai possa obter os benefícios atualizados.
   List<Beneficio> getUpdatedBeneficios() {
     final List<Beneficio> result = [];
     for (int i = 0; i < _localBenefits.length; i++) {
       final nome = _nameControllers[i].text.trim();
 
-      // Pula a adição de benefícios temporários que não tiveram um nome preenchido.
       if (nome.isEmpty) {
         continue;
       }
 
-      // Se a imagem for o placeholder, envia uma string vazia.
-      // O backend deve ser capaz de lidar com isso (ex: ignorar o campo ou atribuir um default).
       final image = _localBenefits[i].image == _placeholderImageBase64
           ? ''
           : _localBenefits[i].image;
 
+      // Limpa e normaliza o valor para aceitar "15,90" ou "R$ 15.90"
+      final valueString = _valueControllers[i]
+          .text
+          .replaceAll(RegExp(r'[^0-9,]'), '') // Mantém apenas números e vírgula
+          .replaceAll(',', '.'); // Troca vírgula por ponto para o parse
+
       result.add(
         Beneficio(
           nome: nome,
-          valor: double.tryParse(_valueControllers[i].text.trim()) ?? 0.0,
+          valor: double.tryParse(valueString) ?? 0.0,
           image: image,
         ),
       );
@@ -89,6 +91,15 @@ class BenefitsEditState extends State<BenefitsEdit> {
       _nameControllers.add(TextEditingController());
       _valueControllers.add(TextEditingController());
     });
+
+    // Rola para o final da lista após a UI ser reconstruída
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _removeBenefit(int index) {
@@ -102,7 +113,6 @@ class BenefitsEditState extends State<BenefitsEdit> {
   }
 
   Future<void> _pickImage(int index) async {
-    // Impede múltiplos cliques enquanto uma imagem já está sendo processada
     if (_pickingImageIndex != null) return;
 
     setState(() {
@@ -110,20 +120,37 @@ class BenefitsEditState extends State<BenefitsEdit> {
     });
 
     try {
-      // Usa o file_picker para selecionar uma imagem
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
-        withData: true, // Essencial para web para obter os bytes do arquivo
+        withData: true,
       );
 
       if (result != null && result.files.single.bytes != null) {
-        final Uint8List imageBytes = result.files.single.bytes!;
-        final String base64Image = base64Encode(imageBytes);
+        final Uint8List originalBytes = result.files.single.bytes!;
+
+        img.Image? originalImage = img.decodeImage(originalBytes);
+
+        if (originalImage == null) {
+          debugPrint('Erro: Não foi possível decodificar a imagem.');
+          return;
+        }
+
+        img.Image resizedImage = img.copyResize(
+          originalImage,
+          width: 180,
+          height: 40,
+        );
+
+        final compressedBytes = img.encodeJpg(resizedImage, quality: 85);
+        final String base64Image = base64Encode(compressedBytes);
+
         setState(() {
           _localBenefits[index] =
               _localBenefits[index].copyWith(image: base64Image);
         });
       }
+    } catch (e) {
+      debugPrint('Erro ao selecionar ou processar a imagem: $e');
     } finally {
       if (mounted) setState(() => _pickingImageIndex = null);
     }
@@ -132,6 +159,7 @@ class BenefitsEditState extends State<BenefitsEdit> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      controller: _scrollController,
       child: Column(
         children: [
           Padding(
@@ -158,7 +186,6 @@ class BenefitsEditState extends State<BenefitsEdit> {
             ),
           ),
           ListView.builder(
-            // Alterado para usar o estado local
             itemCount: _localBenefits.length,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -189,7 +216,10 @@ class BenefitsEditState extends State<BenefitsEdit> {
                         Expanded(
                             child: _buildTextField(
                                 _valueControllers[index], 'Valor',
-                                prefixText: 'R\$ ')),
+                                prefixText: 'R\$ ',
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true))),
                         const SizedBox(
                           width: 16,
                         ),
@@ -268,9 +298,10 @@ class BenefitsEditState extends State<BenefitsEdit> {
   }
 
   Widget _buildTextField(TextEditingController controller, String label,
-      {String prefixText = ''}) {
+      {String prefixText = '', TextInputType? keyboardType}) {
     return TextFormField(
       controller: controller,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           labelText: label,
